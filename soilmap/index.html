@@ -1,0 +1,3082 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet-measure.css">
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        </style>
+        <title>Mangaroa Map</title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet.wms.js"></script>
+        <script src="js/leaflet-measure.js"></script>
+        <script src="data/BuildingsOverlay_6.js"></script>
+        <script src="data/PowerPoles_7.js"></script>
+        <script src="data/MangaroaSoilMap_8.js"></script>
+        <script src="data/GroundUpfencing_9.js"></script>
+        <script src="data/Troughs_10.js"></script>
+        <script src="data/NewtroughsforFarm2_11.js"></script>
+        <script src="data/Fencing_12.js"></script>
+        <script src="data/FarmMap_13.js"></script>
+        <script src="data/RiverCorridor_14.js"></script>
+        <script src="data/RiverErosion_15.js"></script>
+        <script src="data/RiverOverflow_16.js"></script>
+        <script src="data/peat_17.js"></script>
+        <script src="data/ponding_18.js"></script>
+        <script>
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:1
+        }).fitBounds([[-41.15408460158303,175.08171990596495],[-41.14633647730482,175.0936169967706]]);
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        // add class to format popup if it contains media
+		function addClassToPopupIfMedia(content, popup) {
+			var tempDiv = document.createElement('div');
+			tempDiv.innerHTML = content;
+			if (tempDiv.querySelector('td img')) {
+				popup._contentNode.classList.add('media');
+					// Delay to force the redraw
+					setTimeout(function() {
+						popup.update();
+					}, 10);
+			} else {
+				popup._contentNode.classList.remove('media');
+			}
+		}
+        var title = new L.Control({'position':'topleft'});
+        title.onAdd = function (map) {
+            this._div = L.DomUtil.create('div', 'info');
+            this.update();
+            return this._div;
+        };
+        title.update = function () {
+            this._div.innerHTML = '<h2>Mangaroa Map</h2>';
+        };
+        title.addTo(map);
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        var measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        measureControl.addTo(map);
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+        map.createPane('pane_GoogleSatellite_0');
+        map.getPane('pane_GoogleSatellite_0').style.zIndex = 400;
+        var layer_GoogleSatellite_0 = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            pane: 'pane_GoogleSatellite_0',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 20
+        });
+        layer_GoogleSatellite_0;
+        map.addLayer(layer_GoogleSatellite_0);
+        map.createPane('pane_NDVINormalizedDifferenceVegetationIndex_1');
+        map.getPane('pane_NDVINormalizedDifferenceVegetationIndex_1').style.zIndex = 401;
+        var layer_NDVINormalizedDifferenceVegetationIndex_1 = L.WMS.layer("https://sh.dataspace.copernicus.eu/ogc/wms/da579dec-a7ea-4517-9d38-55e0745256ed?showLogo=false&time=2024-11-26%2F2025-04-24T12%3A44%3A04.414299%2FP1D&priority=mostRecent&maxcc=27&preview=1", "NDVI", {
+            pane: 'pane_NDVINormalizedDifferenceVegetationIndex_1',
+            format: 'image/png',
+            uppercase: true,
+            transparent: true,
+            continuousWorld : true,
+            tiled: true,
+            info_format: 'text/html',
+            opacity: 1,
+            identify: false,
+            attribution: '',
+        });
+        map.createPane('pane_WaterVapor_2');
+        map.getPane('pane_WaterVapor_2').style.zIndex = 402;
+        var layer_WaterVapor_2 = L.WMS.layer("https://sh.dataspace.copernicus.eu/ogc/wms/da579dec-a7ea-4517-9d38-55e0745256ed?showLogo=false&time=2024-08-10%2F2025-03-30%2FP1D&priority=mostRecent&maxcc=100&preview=1", "B09", {
+            pane: 'pane_WaterVapor_2',
+            format: 'image/png',
+            uppercase: true,
+            transparent: true,
+            continuousWorld : true,
+            tiled: true,
+            info_format: 'text/html',
+            opacity: 1,
+            identify: false,
+            attribution: '',
+        });
+        map.createPane('pane_AgriculturemostRecent_3');
+        map.getPane('pane_AgriculturemostRecent_3').style.zIndex = 403;
+        var layer_AgriculturemostRecent_3 = L.WMS.layer("https://sh.dataspace.copernicus.eu/ogc/wms/da579dec-a7ea-4517-9d38-55e0745256ed?showLogo=false&time=2024-08-10%2F2025-03-30%2FP1D&priority=mostRecent&maxcc=9&preview=1", "AGRICULTURE", {
+            pane: 'pane_AgriculturemostRecent_3',
+            format: 'image/png',
+            uppercase: true,
+            transparent: true,
+            continuousWorld : true,
+            tiled: true,
+            info_format: 'text/html',
+            opacity: 1,
+            identify: false,
+            attribution: '',
+        });
+        map.createPane('pane_Agricultureleastcloud_4');
+        map.getPane('pane_Agricultureleastcloud_4').style.zIndex = 404;
+        var layer_Agricultureleastcloud_4 = L.WMS.layer("https://sh.dataspace.copernicus.eu/ogc/wms/da579dec-a7ea-4517-9d38-55e0745256ed?showLogo=false&time=2024-08-10%2F2025-03-30%2FP1D&priority=leastCC&maxcc=9&preview=1", "AGRICULTURE", {
+            pane: 'pane_Agricultureleastcloud_4',
+            format: 'image/png',
+            uppercase: true,
+            transparent: true,
+            continuousWorld : true,
+            tiled: true,
+            info_format: 'text/html',
+            opacity: 1,
+            identify: false,
+            attribution: '',
+        });
+        map.createPane('pane_MoistureIndex_5');
+        map.getPane('pane_MoistureIndex_5').style.zIndex = 405;
+        var layer_MoistureIndex_5 = L.WMS.layer("https://sh.dataspace.copernicus.eu/ogc/wms/da579dec-a7ea-4517-9d38-55e0745256ed?showLogo=false&time=2024-08-10%2F2025-03-30%2FP1D&priority=leastCC&maxcc=9&preview=1", "MOISTURE_INDEX", {
+            pane: 'pane_MoistureIndex_5',
+            format: 'image/png',
+            uppercase: true,
+            transparent: true,
+            continuousWorld : true,
+            tiled: true,
+            info_format: 'text/html',
+            opacity: 1,
+            identify: false,
+            attribution: '',
+        });
+        function pop_BuildingsOverlay_6(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_BuildingsOverlay_6_0() {
+            return {
+                pane: 'pane_BuildingsOverlay_6',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(164,113,88,1.0)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_BuildingsOverlay_6');
+        map.getPane('pane_BuildingsOverlay_6').style.zIndex = 406;
+        map.getPane('pane_BuildingsOverlay_6').style['mix-blend-mode'] = 'normal';
+        var layer_BuildingsOverlay_6 = new L.geoJson(json_BuildingsOverlay_6, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_BuildingsOverlay_6',
+            layerName: 'layer_BuildingsOverlay_6',
+            pane: 'pane_BuildingsOverlay_6',
+            onEachFeature: pop_BuildingsOverlay_6,
+            style: style_BuildingsOverlay_6_0,
+        });
+        bounds_group.addLayer(layer_BuildingsOverlay_6);
+        function pop_PowerPoles_7(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['full_id'] !== null ? autolinker.link(String(feature.properties['full_id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['osm_id'] !== null ? autolinker.link(String(feature.properties['osm_id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['osm_type'] !== null ? autolinker.link(String(feature.properties['osm_type']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_PowerPoles_7_0() {
+            return {
+                pane: 'pane_PowerPoles_7',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(125,139,143,1.0)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_PowerPoles_7');
+        map.getPane('pane_PowerPoles_7').style.zIndex = 407;
+        map.getPane('pane_PowerPoles_7').style['mix-blend-mode'] = 'normal';
+        var layer_PowerPoles_7 = new L.geoJson(json_PowerPoles_7, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_PowerPoles_7',
+            layerName: 'layer_PowerPoles_7',
+            pane: 'pane_PowerPoles_7',
+            onEachFeature: pop_PowerPoles_7,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_PowerPoles_7_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_PowerPoles_7);
+        function pop_MangaroaSoilMap_8(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['SHAPE_Leng'] !== null ? autolinker.link(String(feature.properties['SHAPE_Leng']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Soil Type</th>\
+                        <td class="visible-with-data" id="Type">' + (feature.properties['Type'] !== null ? autolinker.link(String(feature.properties['Type']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="SoilName" colspan="2"><strong>Soil Name</strong><br />' + (feature.properties['SoilName'] !== null ? autolinker.link(String(feature.properties['SoilName']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Description</th>\
+                        <td class="visible-with-data" id="Descript">' + (feature.properties['Descript'] !== null ? autolinker.link(String(feature.properties['Descript']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Landscape'] !== null ? autolinker.link(String(feature.properties['Landscape']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Slope'] !== null ? autolinker.link(String(feature.properties['Slope']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['ParentMat'] !== null ? autolinker.link(String(feature.properties['ParentMat']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Topsoil</th>\
+                        <td class="visible-with-data" id="Topsoil">' + (feature.properties['Topsoil'] !== null ? autolinker.link(String(feature.properties['Topsoil']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Subsoil</th>\
+                        <td class="visible-with-data" id="Subsoil">' + (feature.properties['Subsoil'] !== null ? autolinker.link(String(feature.properties['Subsoil']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Drainage</th>\
+                        <td class="visible-with-data" id="Drainage">' + (feature.properties['Drainage'] !== null ? autolinker.link(String(feature.properties['Drainage']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">WWT Depth (cm)</th>\
+                        <td class="visible-with-data" id="WWTdepth">' + (feature.properties['WWTdepth'] !== null ? autolinker.link(String(feature.properties['WWTdepth']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">SWT Depth (cm)</th>\
+                        <td class="visible-with-data" id="SWTdepth">' + (feature.properties['SWTdepth'] !== null ? autolinker.link(String(feature.properties['SWTdepth']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Root Depth (cm)</th>\
+                        <td class="visible-with-data" id="Rootdepth">' + (feature.properties['Rootdepth'] !== null ? autolinker.link(String(feature.properties['Rootdepth']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Gravel Depth (cm)</th>\
+                        <td class="visible-with-data" id="Graveldept">' + (feature.properties['Graveldept'] !== null ? autolinker.link(String(feature.properties['Graveldept']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Subsoil Mottles</th>\
+                        <td class="visible-with-data" id="Subsoilmot">' + (feature.properties['Subsoilmot'] !== null ? autolinker.link(String(feature.properties['Subsoilmot']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Gley Subsoil</th>\
+                        <td class="visible-with-data" id="GleySubsoi">' + (feature.properties['GleySubsoi'] !== null ? autolinker.link(String(feature.properties['GleySubsoi']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Septic Tank Suitability</th>\
+                        <td class="visible-with-data" id="SepticSuit">' + (feature.properties['SepticSuit'] !== null ? autolinker.link(String(feature.properties['SepticSuit']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Flood Potential</th>\
+                        <td class="visible-with-data" id="FloodPoten">' + (feature.properties['FloodPoten'] !== null ? autolinker.link(String(feature.properties['FloodPoten']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Pugging Susceptibility</th>\
+                        <td class="visible-with-data" id="PuggingSus">' + (feature.properties['PuggingSus'] !== null ? autolinker.link(String(feature.properties['PuggingSus']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">DM Production (kg/ha/yr)</th>\
+                        <td class="visible-with-data" id="DMProd">' + (feature.properties['DMProd'] !== null ? autolinker.link(String(feature.properties['DMProd']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Food Production Value</th>\
+                        <td class="visible-with-data" id="FoodProd">' + (feature.properties['FoodProd'] !== null ? autolinker.link(String(feature.properties['FoodProd']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Shape__Area</th>\
+                        <td class="visible-with-data" id="Shape__Area">' + (feature.properties['Shape__Area'] !== null ? autolinker.link(String(feature.properties['Shape__Area']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Shape__Length'] !== null ? autolinker.link(String(feature.properties['Shape__Length']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_MangaroaSoilMap_8_0(feature) {
+            switch(String(feature.properties['SoilName'])) {
+                case 'Disturbed':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(213,38,105,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Gollans':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(144,204,66,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Gollans peaty':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(141,51,206,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Heretaunga':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(206,199,116,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Heretaunga mottled':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(227,65,40,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Heretaunga young':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(58,208,211,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Judgeford':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(72,232,152,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Korokoro hill':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(206,40,189,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Korokoro rolling':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(197,234,31,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Mangaroa':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(58,49,220,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Narrowneck':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(240,124,46,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Stokes':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(190,106,207,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Taita':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(70,135,210,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Taita hill':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(106,201,177,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Taita rolling':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(115,189,218,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Tawhai steep':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(129,222,126,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Trentham':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(95,222,122,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Trentham mottled':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(129,238,82,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Waikanae':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(230,170,58,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Wainuiomata':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(17,55,211,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Waiwhetu':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(207,124,134,0.618)',
+                interactive: true,
+            }
+                    break;
+                case 'Wingate hill':
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(202,62,153,0.618)',
+                interactive: true,
+            }
+                    break;
+                default:
+                    return {
+                pane: 'pane_MangaroaSoilMap_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.618)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(171,142,234,0.618)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_MangaroaSoilMap_8');
+        map.getPane('pane_MangaroaSoilMap_8').style.zIndex = 408;
+        map.getPane('pane_MangaroaSoilMap_8').style['mix-blend-mode'] = 'normal';
+        var layer_MangaroaSoilMap_8 = new L.geoJson(json_MangaroaSoilMap_8, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_MangaroaSoilMap_8',
+            layerName: 'layer_MangaroaSoilMap_8',
+            pane: 'pane_MangaroaSoilMap_8',
+            onEachFeature: pop_MangaroaSoilMap_8,
+            style: style_MangaroaSoilMap_8_0,
+        });
+        bounds_group.addLayer(layer_MangaroaSoilMap_8);
+        map.addLayer(layer_MangaroaSoilMap_8);
+        function pop_GroundUpfencing_9(feature, layer) {
+            var popupContent = '<table>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_GroundUpfencing_9_0() {
+            return {
+                pane: 'pane_GroundUpfencing_9',
+                opacity: 1,
+                color: 'rgba(163,138,46,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+        }
+        map.createPane('pane_GroundUpfencing_9');
+        map.getPane('pane_GroundUpfencing_9').style.zIndex = 409;
+        map.getPane('pane_GroundUpfencing_9').style['mix-blend-mode'] = 'normal';
+        var layer_GroundUpfencing_9 = new L.geoJson(json_GroundUpfencing_9, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_GroundUpfencing_9',
+            layerName: 'layer_GroundUpfencing_9',
+            pane: 'pane_GroundUpfencing_9',
+            onEachFeature: pop_GroundUpfencing_9,
+            style: style_GroundUpfencing_9_0,
+        });
+        bounds_group.addLayer(layer_GroundUpfencing_9);
+        function pop_Troughs_10(feature, layer) {
+            var popupContent = '<table>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Troughs_10_0() {
+            return {
+                pane: 'pane_Troughs_10',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(229,182,54,1.0)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_Troughs_10');
+        map.getPane('pane_Troughs_10').style.zIndex = 410;
+        map.getPane('pane_Troughs_10').style['mix-blend-mode'] = 'normal';
+        var layer_Troughs_10 = new L.geoJson(json_Troughs_10, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_Troughs_10',
+            layerName: 'layer_Troughs_10',
+            pane: 'pane_Troughs_10',
+            onEachFeature: pop_Troughs_10,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Troughs_10_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Troughs_10);
+        function pop_NewtroughsforFarm2_11(feature, layer) {
+            var popupContent = '<table>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_NewtroughsforFarm2_11_0() {
+            return {
+                pane: 'pane_NewtroughsforFarm2_11',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(152,125,183,1.0)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_NewtroughsforFarm2_11');
+        map.getPane('pane_NewtroughsforFarm2_11').style.zIndex = 411;
+        map.getPane('pane_NewtroughsforFarm2_11').style['mix-blend-mode'] = 'normal';
+        var layer_NewtroughsforFarm2_11 = new L.geoJson(json_NewtroughsforFarm2_11, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_NewtroughsforFarm2_11',
+            layerName: 'layer_NewtroughsforFarm2_11',
+            pane: 'pane_NewtroughsforFarm2_11',
+            onEachFeature: pop_NewtroughsforFarm2_11,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_NewtroughsforFarm2_11_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_NewtroughsforFarm2_11);
+        function pop_Fencing_12(feature, layer) {
+            var popupContent = '<table>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Fencing_12_0() {
+            return {
+                pane: 'pane_Fencing_12',
+                opacity: 1,
+                color: 'rgba(251,177,10,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+        }
+        map.createPane('pane_Fencing_12');
+        map.getPane('pane_Fencing_12').style.zIndex = 412;
+        map.getPane('pane_Fencing_12').style['mix-blend-mode'] = 'normal';
+        var layer_Fencing_12 = new L.geoJson(json_Fencing_12, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_Fencing_12',
+            layerName: 'layer_Fencing_12',
+            pane: 'pane_Fencing_12',
+            onEachFeature: pop_Fencing_12,
+            style: style_Fencing_12_0,
+        });
+        bounds_group.addLayer(layer_Fencing_12);
+        function pop_FarmMap_13(feature, layer) {
+            var popupContent = '<table>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_FarmMap_13_0(feature) {
+            switch(String(feature.properties['PaddockId'])) {
+                case '691154.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(223,89,89,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691155.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(209,187,19,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691156.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(203,61,125,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691157.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(122,67,216,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691159.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(207,161,121,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691161.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(160,200,52,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691172.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(228,106,99,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691173.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(203,88,184,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691174.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(226,131,90,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691175.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(110,195,240,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691176.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(52,126,223,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691177.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(192,206,66,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691178.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(27,107,227,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691179.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(210,48,94,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691183.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(186,111,211,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691184.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(119,44,210,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691185.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(210,58,224,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691187.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(200,56,208,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691188.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(116,205,144,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691190.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(231,228,59,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691191.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(65,73,239,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691193.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(176,204,84,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691195.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(80,199,210,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691196.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(189,106,233,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691199.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(58,118,228,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691200.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(106,132,216,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691202.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(82,61,200,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691203.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(225,235,88,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691207.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(66,215,43,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691208.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(231,69,199,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691210.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(149,86,204,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691211.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(191,109,214,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691222.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(44,209,77,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691223.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(216,102,184,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691225.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(224,42,224,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691226.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(49,206,154,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691230.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(177,222,110,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691232.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(107,240,59,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691235.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(182,206,74,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691236.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(98,47,229,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691237.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(91,225,191,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691243.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(202,91,147,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691250.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(231,145,79,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691253.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(105,90,220,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691254.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(172,239,120,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691255.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(211,32,47,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691257.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(218,32,131,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691261.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(227,43,15,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691271.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(79,176,203,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691275.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(20,205,48,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691276.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(207,44,202,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691277.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(22,225,181,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691279.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(56,146,231,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691280.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(233,139,120,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691283.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(233,176,78,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '691284.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(236,225,73,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '695001.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(106,203,129,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '695003.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(118,203,168,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '696347.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(109,212,40,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '696348.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(58,219,64,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '699307.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(218,56,41,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '699308.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(189,71,207,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '752254.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(212,184,93,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '752257.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(57,144,238,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '752258.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(226,105,150,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '753797.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(226,16,68,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '753798.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(82,109,228,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '753799.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(232,83,177,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '753800.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(64,218,238,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '753801.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(157,113,203,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '758569.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(104,38,204,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '758570.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(213,127,36,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '762125.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(27,235,24,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '762126.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(208,234,62,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '762127.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(121,201,201,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '762129.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(212,71,196,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '762132.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(239,208,34,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '764534.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(238,59,223,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '764535.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(82,216,75,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '764696.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(211,22,85,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '765582.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(14,201,129,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '765583.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(52,46,230,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '770224.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(53,81,237,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '770909.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(96,191,210,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '794360.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(214,101,31,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '795352.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(176,217,122,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '796608.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(208,211,59,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '796620.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(50,226,120,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '796621.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(36,230,204,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '798424.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(178,235,124,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '798428.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(106,136,201,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '798617.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(202,18,95,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '798667.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(144,221,122,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '798668.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(223,152,127,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '798669.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(200,59,87,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '798670.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(168,136,235,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '798671.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(103,239,153,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '798672.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(139,226,92,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '798673.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(228,189,31,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '798674.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(128,238,80,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '798675.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(98,219,106,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '798676.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(87,89,219,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '798677.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(54,173,212,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '814941.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(36,221,89,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '851876.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(36,202,188,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '851877.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(172,21,202,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '865101.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(194,92,238,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '865106.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(123,118,203,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '865118.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(35,130,203,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '865119.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(157,82,203,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '865120.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(44,211,217,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '865121.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(236,106,204,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '865122.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(59,77,240,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '865123.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(129,104,212,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '865124.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(30,145,221,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '865129.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(206,138,56,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '865133.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(45,167,223,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '874405.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(225,174,46,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '874406.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(120,204,110,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '881996.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(157,70,224,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '890753.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(230,119,138,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '890754.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(79,227,158,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '890759.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(70,219,194,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '890762.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(178,204,121,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '890763.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(70,204,40,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '890764.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(21,203,42,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '890765.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(232,102,117,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '890766.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(223,126,191,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '890767.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(103,236,196,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '890768.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(80,203,136,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '890769.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(223,162,129,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '890770.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(120,213,20,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '963225.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(232,63,68,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '964737.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(239,132,194,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '964738.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(235,183,71,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '964739.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(124,218,171,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '964740.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(201,63,25,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '974302.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(166,232,44,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '974303.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(105,72,237,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '1026672.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(19,69,208,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                case '1026673.0':
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(83,228,221,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+                default:
+                    return {
+                pane: 'pane_FarmMap_13',
+                opacity: 1,
+                color: 'rgba(214,177,121,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_FarmMap_13');
+        map.getPane('pane_FarmMap_13').style.zIndex = 413;
+        map.getPane('pane_FarmMap_13').style['mix-blend-mode'] = 'normal';
+        var layer_FarmMap_13 = new L.geoJson(json_FarmMap_13, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_FarmMap_13',
+            layerName: 'layer_FarmMap_13',
+            pane: 'pane_FarmMap_13',
+            onEachFeature: pop_FarmMap_13,
+            style: style_FarmMap_13_0,
+        });
+        bounds_group.addLayer(layer_FarmMap_13);
+        function pop_RiverCorridor_14(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_RiverCorridor_14_0() {
+            return {
+                pane: 'pane_RiverCorridor_14',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(0,113,193,0.396078431372549)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_RiverCorridor_14');
+        map.getPane('pane_RiverCorridor_14').style.zIndex = 414;
+        map.getPane('pane_RiverCorridor_14').style['mix-blend-mode'] = 'normal';
+        var layer_RiverCorridor_14 = new L.geoJson(json_RiverCorridor_14, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_RiverCorridor_14',
+            layerName: 'layer_RiverCorridor_14',
+            pane: 'pane_RiverCorridor_14',
+            onEachFeature: pop_RiverCorridor_14,
+            style: style_RiverCorridor_14_0,
+        });
+        bounds_group.addLayer(layer_RiverCorridor_14);
+        function pop_RiverErosion_15(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_RiverErosion_15_0() {
+            return {
+                pane: 'pane_RiverErosion_15',
+                opacity: 1,
+                color: 'rgba(231,113,72,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+        }
+        map.createPane('pane_RiverErosion_15');
+        map.getPane('pane_RiverErosion_15').style.zIndex = 415;
+        map.getPane('pane_RiverErosion_15').style['mix-blend-mode'] = 'normal';
+        var layer_RiverErosion_15 = new L.geoJson(json_RiverErosion_15, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_RiverErosion_15',
+            layerName: 'layer_RiverErosion_15',
+            pane: 'pane_RiverErosion_15',
+            onEachFeature: pop_RiverErosion_15,
+            style: style_RiverErosion_15_0,
+        });
+        bounds_group.addLayer(layer_RiverErosion_15);
+        function pop_RiverOverflow_16(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_RiverOverflow_16_0() {
+            return {
+                pane: 'pane_RiverOverflow_16',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,139,0,0.3803921568627451)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_RiverOverflow_16');
+        map.getPane('pane_RiverOverflow_16').style.zIndex = 416;
+        map.getPane('pane_RiverOverflow_16').style['mix-blend-mode'] = 'normal';
+        var layer_RiverOverflow_16 = new L.geoJson(json_RiverOverflow_16, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_RiverOverflow_16',
+            layerName: 'layer_RiverOverflow_16',
+            pane: 'pane_RiverOverflow_16',
+            onEachFeature: pop_RiverOverflow_16,
+            style: style_RiverOverflow_16_0,
+        });
+        bounds_group.addLayer(layer_RiverOverflow_16);
+        function pop_peat_17(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_peat_17_0() {
+            return {
+                pane: 'pane_peat_17',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(118,73,11,0.39215686274509803)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_peat_17');
+        map.getPane('pane_peat_17').style.zIndex = 417;
+        map.getPane('pane_peat_17').style['mix-blend-mode'] = 'normal';
+        var layer_peat_17 = new L.geoJson(json_peat_17, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_peat_17',
+            layerName: 'layer_peat_17',
+            pane: 'pane_peat_17',
+            onEachFeature: pop_peat_17,
+            style: style_peat_17_0,
+        });
+        bounds_group.addLayer(layer_peat_17);
+        function pop_ponding_18(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_ponding_18_0() {
+            return {
+                pane: 'pane_ponding_18',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(49,175,232,0.3176470588235294)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_ponding_18');
+        map.getPane('pane_ponding_18').style.zIndex = 418;
+        map.getPane('pane_ponding_18').style['mix-blend-mode'] = 'normal';
+        var layer_ponding_18 = new L.geoJson(json_ponding_18, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_ponding_18',
+            layerName: 'layer_ponding_18',
+            pane: 'pane_ponding_18',
+            onEachFeature: pop_ponding_18,
+            style: style_ponding_18_0,
+        });
+        bounds_group.addLayer(layer_ponding_18);
+        var overlaysTree = [
+        {label: '<b>Mangaroa Flood Map</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: '<img src="legend/ponding_18.png" /> ponding', layer: layer_ponding_18},
+            {label: '<img src="legend/peat_17.png" /> peat', layer: layer_peat_17},
+            {label: '<img src="legend/RiverOverflow_16.png" /> River Overflow', layer: layer_RiverOverflow_16},
+            {label: '<img src="legend/RiverErosion_15.png" /> River Erosion', layer: layer_RiverErosion_15},
+            {label: '<img src="legend/RiverCorridor_14.png" /> River Corridor', layer: layer_RiverCorridor_14},]},
+        {label: '<b>FarmIQ</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: 'Farm Map<br /><table><tr><td style="text-align: center;"><img src="legend/FarmMap_13_6911540.png" /></td><td>691154</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_6911551.png" /></td><td>691155</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_6911562.png" /></td><td>691156</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_6911573.png" /></td><td>691157</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_6911594.png" /></td><td>691159</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_6911615.png" /></td><td>691161</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_6911726.png" /></td><td>691172</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_6911737.png" /></td><td>691173</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_6911748.png" /></td><td>691174</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_6911759.png" /></td><td>691175</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69117610.png" /></td><td>691176</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69117711.png" /></td><td>691177</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69117812.png" /></td><td>691178</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69117913.png" /></td><td>691179</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69118314.png" /></td><td>691183</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69118415.png" /></td><td>691184</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69118516.png" /></td><td>691185</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69118717.png" /></td><td>691187</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69118818.png" /></td><td>691188</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69119019.png" /></td><td>691190</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69119120.png" /></td><td>691191</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69119321.png" /></td><td>691193</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69119522.png" /></td><td>691195</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69119623.png" /></td><td>691196</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69119924.png" /></td><td>691199</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69120025.png" /></td><td>691200</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69120226.png" /></td><td>691202</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69120327.png" /></td><td>691203</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69120728.png" /></td><td>691207</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69120829.png" /></td><td>691208</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69121030.png" /></td><td>691210</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69121131.png" /></td><td>691211</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69122232.png" /></td><td>691222</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69122333.png" /></td><td>691223</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69122534.png" /></td><td>691225</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69122635.png" /></td><td>691226</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69123036.png" /></td><td>691230</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69123237.png" /></td><td>691232</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69123538.png" /></td><td>691235</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69123639.png" /></td><td>691236</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69123740.png" /></td><td>691237</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69124341.png" /></td><td>691243</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69125042.png" /></td><td>691250</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69125343.png" /></td><td>691253</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69125444.png" /></td><td>691254</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69125545.png" /></td><td>691255</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69125746.png" /></td><td>691257</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69126147.png" /></td><td>691261</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69127148.png" /></td><td>691271</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69127549.png" /></td><td>691275</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69127650.png" /></td><td>691276</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69127751.png" /></td><td>691277</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69127952.png" /></td><td>691279</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69128053.png" /></td><td>691280</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69128354.png" /></td><td>691283</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69128455.png" /></td><td>691284</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69500156.png" /></td><td>695001</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69500357.png" /></td><td>695003</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69634758.png" /></td><td>696347</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69634859.png" /></td><td>696348</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69930760.png" /></td><td>699307</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_69930861.png" /></td><td>699308</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_75225462.png" /></td><td>752254</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_75225763.png" /></td><td>752257</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_75225864.png" /></td><td>752258</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_75379765.png" /></td><td>753797</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_75379866.png" /></td><td>753798</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_75379967.png" /></td><td>753799</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_75380068.png" /></td><td>753800</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_75380169.png" /></td><td>753801</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_75856970.png" /></td><td>758569</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_75857071.png" /></td><td>758570</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_76212572.png" /></td><td>762125</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_76212673.png" /></td><td>762126</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_76212774.png" /></td><td>762127</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_76212975.png" /></td><td>762129</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_76213276.png" /></td><td>762132</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_76453477.png" /></td><td>764534</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_76453578.png" /></td><td>764535</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_76469679.png" /></td><td>764696</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_76558280.png" /></td><td>765582</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_76558381.png" /></td><td>765583</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_77022482.png" /></td><td>770224</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_77090983.png" /></td><td>770909</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_79436084.png" /></td><td>794360</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_79535285.png" /></td><td>795352</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_79660886.png" /></td><td>796608</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_79662087.png" /></td><td>796620</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_79662188.png" /></td><td>796621</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_79842489.png" /></td><td>798424</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_79842890.png" /></td><td>798428</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_79861791.png" /></td><td>798617</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_79866792.png" /></td><td>798667</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_79866893.png" /></td><td>798668</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_79866994.png" /></td><td>798669</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_79867095.png" /></td><td>798670</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_79867196.png" /></td><td>798671</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_79867297.png" /></td><td>798672</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_79867398.png" /></td><td>798673</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_79867499.png" /></td><td>798674</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_798675100.png" /></td><td>798675</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_798676101.png" /></td><td>798676</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_798677102.png" /></td><td>798677</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_814941103.png" /></td><td>814941</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_851876104.png" /></td><td>851876</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_851877105.png" /></td><td>851877</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_865101106.png" /></td><td>865101</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_865106107.png" /></td><td>865106</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_865118108.png" /></td><td>865118</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_865119109.png" /></td><td>865119</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_865120110.png" /></td><td>865120</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_865121111.png" /></td><td>865121</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_865122112.png" /></td><td>865122</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_865123113.png" /></td><td>865123</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_865124114.png" /></td><td>865124</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_865129115.png" /></td><td>865129</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_865133116.png" /></td><td>865133</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_874405117.png" /></td><td>874405</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_874406118.png" /></td><td>874406</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_881996119.png" /></td><td>881996</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_890753120.png" /></td><td>890753</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_890754121.png" /></td><td>890754</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_890759122.png" /></td><td>890759</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_890762123.png" /></td><td>890762</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_890763124.png" /></td><td>890763</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_890764125.png" /></td><td>890764</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_890765126.png" /></td><td>890765</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_890766127.png" /></td><td>890766</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_890767128.png" /></td><td>890767</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_890768129.png" /></td><td>890768</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_890769130.png" /></td><td>890769</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_890770131.png" /></td><td>890770</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_963225132.png" /></td><td>963225</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_964737133.png" /></td><td>964737</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_964738134.png" /></td><td>964738</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_964739135.png" /></td><td>964739</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_964740136.png" /></td><td>964740</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_974302137.png" /></td><td>974302</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_974303138.png" /></td><td>974303</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_1026672139.png" /></td><td>1026672</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_1026673140.png" /></td><td>1026673</td></tr><tr><td style="text-align: center;"><img src="legend/FarmMap_13_141.png" /></td><td></td></tr></table>', layer: layer_FarmMap_13},
+            {label: '<img src="legend/Fencing_12.png" /> Fencing', layer: layer_Fencing_12},
+            {label: '<img src="legend/NewtroughsforFarm2_11.png" /> New troughs for Farm2', layer: layer_NewtroughsforFarm2_11},
+            {label: '<img src="legend/Troughs_10.png" /> Troughs', layer: layer_Troughs_10},
+            {label: '<img src="legend/GroundUpfencing_9.png" /> Ground Up fencing', layer: layer_GroundUpfencing_9},]},
+        {label: '<b>Land Stewardship</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: 'Mangaroa Soil Map<br /><table><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Disturbed0.png" /></td><td>Disturbed</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Gollans1.png" /></td><td>Gollans</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Gollanspeaty2.png" /></td><td>Gollans peaty</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Heretaunga3.png" /></td><td>Heretaunga</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Heretaungamottled4.png" /></td><td>Heretaunga mottled</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Heretaungayoung5.png" /></td><td>Heretaunga young</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Judgeford6.png" /></td><td>Judgeford</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Korokorohill7.png" /></td><td>Korokoro hill</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Korokororolling8.png" /></td><td>Korokoro rolling</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Mangaroa9.png" /></td><td>Mangaroa</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Narrowneck10.png" /></td><td>Narrowneck</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Stokes11.png" /></td><td>Stokes</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Taita12.png" /></td><td>Taita</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Taitahill13.png" /></td><td>Taita hill</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Taitarolling14.png" /></td><td>Taita rolling</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Tawhaisteep15.png" /></td><td>Tawhai steep</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Trentham16.png" /></td><td>Trentham</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Trenthammottled17.png" /></td><td>Trentham mottled</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Waikanae18.png" /></td><td>Waikanae</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Wainuiomata19.png" /></td><td>Wainuiomata</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Waiwhetu20.png" /></td><td>Waiwhetu</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_Wingatehill21.png" /></td><td>Wingate hill</td></tr><tr><td style="text-align: center;"><img src="legend/MangaroaSoilMap_8_22.png" /></td><td></td></tr></table>', layer: layer_MangaroaSoilMap_8},]},
+        {label: '<b>Misc / Other</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: '<img src="legend/PowerPoles_7.png" /> Power Poles', layer: layer_PowerPoles_7},
+            {label: '<img src="legend/BuildingsOverlay_6.png" /> Buildings Overlay', layer: layer_BuildingsOverlay_6},]},
+        {label: '<b>Satellite / Hyperspectral</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: "Moisture Index", layer: layer_MoistureIndex_5},
+            {label: "Agriculture (least cloud)", layer: layer_Agricultureleastcloud_4},
+            {label: "Agriculture (most Recent)", layer: layer_AgriculturemostRecent_3},
+            {label: "Water Vapor", layer: layer_WaterVapor_2},
+            {label: "NDVI (Normalized Difference Vegetation Index", layer: layer_NDVINormalizedDifferenceVegetationIndex_1},]},
+            {label: "Google Satellite", layer: layer_GoogleSatellite_0},]
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            //namedToggle: true,
+            //selectorBack: false,
+            //closedSymbol: '&#8862; &#x1f5c0;',
+            //openedSymbol: '&#8863; &#x1f5c1;',
+            //collapseAll: 'Collapse all',
+            //expandAll: 'Expand all',
+            collapsed: false, 
+        });
+        lay.addTo(map);
+		document.addEventListener("DOMContentLoaded", function() {
+            // set new Layers List height which considers toggle icon
+            function newLayersListHeight() {
+                var layerScrollbarElement = document.querySelector('.leaflet-control-layers-scrollbar');
+                if (layerScrollbarElement) {
+                    var layersListElement = document.querySelector('.leaflet-control-layers-list');
+                    var originalHeight = layersListElement.style.height 
+                        || window.getComputedStyle(layersListElement).height;
+                    var newHeight = parseFloat(originalHeight) - 50;
+                    layersListElement.style.height = newHeight + 'px';
+                }
+            }
+            var isLayersListExpanded = true;
+            var controlLayersElement = document.querySelector('.leaflet-control-layers');
+            var toggleLayerControl = document.querySelector('.leaflet-control-layers-toggle');
+            // toggle Collapsed/Expanded and apply new Layers List height
+            toggleLayerControl.addEventListener('click', function() {
+                if (isLayersListExpanded) {
+                    controlLayersElement.classList.remove('leaflet-control-layers-expanded');
+                } else {
+                    controlLayersElement.classList.add('leaflet-control-layers-expanded');
+                }
+                isLayersListExpanded = !isLayersListExpanded;
+                newLayersListHeight()
+            });	
+			// apply new Layers List height if toggle layerstree
+			if (controlLayersElement) {
+				controlLayersElement.addEventListener('click', function(event) {
+					var toggleLayerHeaderPointer = event.target.closest('.leaflet-layerstree-header-pointer span');
+					if (toggleLayerHeaderPointer) {
+						newLayersListHeight();
+					}
+				});
+			}
+            // Collapsed/Expanded at Start to apply new height
+            setTimeout(function() {
+                toggleLayerControl.click();
+            }, 10);
+            setTimeout(function() {
+                toggleLayerControl.click();
+            }, 10);
+            // Collapsed touch/small screen
+            var isSmallScreen = window.innerWidth < 650;
+            if (isSmallScreen) {
+                setTimeout(function() {
+                    controlLayersElement.classList.remove('leaflet-control-layers-expanded');
+                    isLayersListExpanded = !isLayersListExpanded;
+                }, 500);
+            }  
+        });       
+        setBounds();
+        </script>
+    </body>
+</html>
